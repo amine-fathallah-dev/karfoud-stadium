@@ -69,7 +69,7 @@ export default function HeroSection() {
             <p className="text-text-muted text-xs">par créneau</p>
           </div>
           <div className="border-l-2 border-primary pl-3">
-            <p className="text-white font-bold text-xl" style={{ fontFamily: 'var(--font-display)' }}>2018</p>
+            <p className="text-white font-bold text-xl" style={{ fontFamily: 'var(--font-display)' }}>2022</p>
             <p className="text-text-muted text-xs">depuis</p>
           </div>
         </div>

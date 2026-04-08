@@ -46,11 +46,11 @@ export default function PlanningFull() {
         >
           <p className="text-text-muted mb-3">Créneau disponible ! Appelez-nous pour réserver :</p>
           <a
-            href="tel:+216XXXXXXXX"
+            href="tel:+21620995569"
             className="inline-flex items-center gap-2 text-primary text-3xl md:text-4xl font-display tracking-widest hover:text-primary-light transition-colors"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            📞 +216 XX XXX XXX
+            📞 +216 20 99 55 69
           </a>
           <p className="text-text-muted text-sm mt-2">Disponible tous les jours, 24h/24</p>
         </div>

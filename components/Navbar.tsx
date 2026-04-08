@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 const links = [
   { href: '/#accueil', label: 'Accueil' },
@@ -17,12 +18,16 @@ export default function Navbar() {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-sm border-b border-white/5">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link
-          href="/"
-          className="font-display text-2xl tracking-widest text-primary"
-          style={{ fontFamily: 'var(--font-display)' }}
-        >
-          KARFOUD STADIUM
+        <Link href="/" className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 relative">
+            <Image src="/logo.png" alt="Karfoud Stadium" fill className="object-cover" />
+          </div>
+          <span
+            className="font-display text-2xl tracking-widest text-primary"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            KARFOUD STADIUM
+          </span>
         </Link>
 
         {/* Desktop nav */}

@@ -3,7 +3,7 @@ const equipments = [
   { icon: '💡', title: 'Éclairage LED haute puissance', desc: 'Disponible 24h/24, visibilité optimale' },
   { icon: '🚿', title: 'Vestiaires & douches séparés', desc: 'Espaces propres et sécurisés' },
   { icon: '🅿️', title: 'Parking sécurisé gratuit', desc: 'Accès facile, surveillance permanente' },
-  { icon: '🎽', title: 'Location de chasubles', desc: 'Disponibles sur place à la demande' },
+  { icon: '🎽', title: 'Dossards disponibles', desc: 'Disponibles sur place à la demande' },
   { icon: '📹', title: 'Vidéosurveillance du site', desc: 'Sécurité assurée en permanence' },
 ]
 

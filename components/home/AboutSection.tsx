@@ -15,12 +15,7 @@ export default function AboutSection() {
           {/* Text */}
           <div className="order-2 md:order-1">
             <p className="text-text leading-relaxed text-base md:text-lg">
-              Karfoud Stadium a ouvert ses portes en 2018 avec une ambition
-              claire : offrir aux amateurs de football tunisien un espace de
-              qualité professionnelle, accessible à tous. Situé au cœur de la
-              région, notre terrain synthétique homologué est entretenu
-              quotidiennement pour garantir des conditions de jeu optimales,
-              que ce soit à l'aube ou en pleine nuit.
+              Situé sur la route entre Grombalia et Beni Khaled, à côté de Dream Park, Karfoud Stadium est un espace de football de qualité professionnelle ouvert à tous. Que vous soyez amateurs souhaitant jouer entre amis ou académies de jeunes à la recherche d&apos;un terrain d&apos;entraînement, nous vous accueillons avec des créneaux flexibles adaptés à tous les emplois du temps — matin, soir ou nuit.
             </p>
             <div className="mt-6 flex gap-8">
               <div>
@@ -28,7 +23,7 @@ export default function AboutSection() {
                   className="text-3xl text-primary"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  2018
+                  2022
                 </p>
                 <p className="text-text-muted text-sm">Année d'ouverture</p>
               </div>
@@ -56,7 +51,7 @@ export default function AboutSection() {
           {/* Image */}
           <div className="order-1 md:order-2 relative h-64 md:h-96 rounded-xl overflow-hidden">
             <Image
-              src="https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?w=800&q=80"
+              src="/terrain.png"
               alt="Terrain de football Karfoud Stadium"
               fill
               className="object-cover"
