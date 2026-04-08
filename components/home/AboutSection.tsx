@@ -15,7 +15,7 @@ export default function AboutSection() {
           {/* Text */}
           <div className="order-2 md:order-1">
             <p className="text-text leading-relaxed text-base md:text-lg">
-              Situé sur la route entre Grombalia et Beni Khaled, à côté de Dream Park, Karfoud Stadium est un espace de football de qualité professionnelle ouvert à tous. Que vous soyez amateurs souhaitant jouer entre amis ou académies de jeunes à la recherche d&apos;un terrain d&apos;entraînement, nous vous accueillons avec des créneaux flexibles adaptés à tous les emplois du temps — matin, soir ou nuit.
+              Situé sur la route entre Beni Khaled et Grombalia, à côté de Dream Park, Karfoud Stadium est un espace de football de qualité professionnelle ouvert à tous. Que vous soyez amateurs souhaitant jouer entre amis ou académies de jeunes à la recherche d&apos;un terrain d&apos;entraînement, nous vous accueillons avec des créneaux flexibles adaptés à tous les emplois du temps — matin, soir ou nuit.
             </p>
             <div className="mt-6 flex gap-8">
               <div>
