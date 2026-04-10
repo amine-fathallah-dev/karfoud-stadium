@@ -21,7 +21,7 @@ export default function HeroSection() {
         alt="Terrain synthétique Karfoud Stadium"
         fill
         priority
-        className="object-cover object-top hidden md:block"
+        className="object-cover object-center hidden md:block"
         sizes="100vw"
       />
 
