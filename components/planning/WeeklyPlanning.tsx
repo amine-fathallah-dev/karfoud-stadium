@@ -3,18 +3,53 @@
 import { useState } from 'react'
 import {
   getWeekDays,
-  buildReservedSet,
-  isReserved,
   formatDateKey,
   formatDayHeader,
   formatDayShort,
-  TIME_SLOTS,
-  formatSlotLabel,
   isToday,
+  SLOT_DURATION_MIN,
   type Reservation,
 } from '@/lib/utils/planning'
 import WeekNavigator from './WeekNavigator'
-import SlotCell from './SlotCell'
+
+const HOUR_HEIGHT = 40 // px per hour
+const START_HOUR = 10
+const END_HOUR = 24
+const TOTAL_HOURS = END_HOUR - START_HOUR
+const PADDING_PX = 16 // espace haut et bas
+const HOURS = Array.from({ length: TOTAL_HOURS + 1 }, (_, i) => START_HOUR + i)
+
+function toMin(time: string): number {
+  const [h, m] = time.slice(0, 5).split(':').map(Number)
+  return h * 60 + m
+}
+
+function timeToTop(time: string): number {
+  const [h, m] = time.slice(0, 5).split(':').map(Number)
+  return PADDING_PX + (h - START_HOUR + m / 60) * HOUR_HEIGHT
+}
+
+const MAX_START_MIN = 22 * 60 + 30 // 22h30 → 00h00
+
+function yToTime(y: number): string | null {
+  const totalMin = Math.max(0, Math.floor(((y - PADDING_PX) / HOUR_HEIGHT) * 60 / 30) * 30)
+  const absMin = START_HOUR * 60 + totalMin
+  if (absMin > MAX_START_MIN) return null
+  const h = Math.floor(absMin / 60)
+  const m = absMin % 60
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+function isAvailable(reservations: Reservation[], dateKey: string, startTime: string): boolean {
+  const sStart = toMin(startTime)
+  const sEnd = sStart + SLOT_DURATION_MIN
+  return !reservations.some(r => {
+    if (r.date !== dateKey) return false
+    const rStart = toMin(r.start_time)
+    const rEnd = toMin(r.end_time)
+    return sStart < rEnd && sEnd > rStart
+  })
+}
 
 type Props = {
   initialReservations: Reservation[]
@@ -24,6 +59,122 @@ type Props = {
   onDelete?: (reservation: Reservation) => void
   weekOffset?: number
   onWeekChange?: (offset: number) => void
+}
+
+function TimeAxis() {
+  return (
+    <div className="flex-shrink-0 w-10 relative select-none" style={{ height: TOTAL_HOURS * HOUR_HEIGHT + PADDING_PX * 2 }}>
+      {HOURS.map((h, i) => (
+        <div
+          key={h}
+          className="absolute right-1 text-text-muted leading-none"
+          style={{ top: PADDING_PX + i * HOUR_HEIGHT - 5, fontSize: 10 }}
+        >
+          {`${String(h % 24).padStart(2, '0')}h`}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function DayColumn({
+  day,
+  reservations,
+  adminMode,
+  onReserve,
+  onDelete,
+  onSlotClick,
+}: {
+  day: Date
+  reservations: Reservation[]
+  adminMode: boolean
+  onReserve?: (date: string, startTime: string) => void
+  onDelete?: (res: Reservation) => void
+  onSlotClick?: (date: string, startTime: string) => void
+}) {
+  const [hoverTime, setHoverTime] = useState<string | null>(null)
+  const dateKey = formatDateKey(day)
+  const colReservations = reservations.filter(r => r.date === dateKey)
+  const totalHeight = TOTAL_HOURS * HOUR_HEIGHT + PADDING_PX * 2
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!adminMode) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const y = e.clientY - rect.top
+    const time = yToTime(y)
+    if (time && isAvailable(reservations, dateKey, time)) {
+      setHoverTime(time)
+    } else {
+      setHoverTime(null)
+    }
+  }
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!adminMode) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const y = e.clientY - rect.top
+    const time = yToTime(y)
+    if (!time || !isAvailable(reservations, dateKey, time)) return
+    onReserve?.(dateKey, time)
+  }
+
+  const slotHeight = (SLOT_DURATION_MIN / 60) * HOUR_HEIGHT
+
+  return (
+    <div
+      className="relative flex-1 cursor-pointer"
+      style={{ height: totalHeight }}
+      onClick={handleClick}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={() => setHoverTime(null)}
+    >
+      {/* Grid lines */}
+      {HOURS.map((_, i) => (
+        <div key={i}>
+          <div className="absolute left-0 right-0 border-t border-white/10" style={{ top: PADDING_PX + i * HOUR_HEIGHT }} />
+          {i < TOTAL_HOURS && (
+            <div className="absolute left-0 right-0 border-t border-white/4" style={{ top: PADDING_PX + i * HOUR_HEIGHT + HOUR_HEIGHT / 2 }} />
+          )}
+        </div>
+      ))}
+
+      {/* Hover preview */}
+      {hoverTime && (
+        <div
+          className="absolute left-0.5 right-0.5 rounded-md bg-primary/20 border border-primary/40 pointer-events-none z-10 flex items-center justify-center"
+          style={{ top: timeToTop(hoverTime), height: slotHeight }}
+        >
+          <span className="text-primary text-xs font-medium">
+            {hoverTime.replace(':', 'h')} → {String(Math.floor((toMin(hoverTime) + SLOT_DURATION_MIN) / 60) % 24).padStart(2, '0')}h{String((toMin(hoverTime) + SLOT_DURATION_MIN) % 60).padStart(2, '0')}
+          </span>
+        </div>
+      )}
+
+      {/* Reservation blocks */}
+      {colReservations.map(res => {
+        const top = timeToTop(res.start_time)
+        const duration = toMin(res.end_time) - toMin(res.start_time)
+        const height = (duration / 60) * HOUR_HEIGHT
+        return (
+          <div
+            key={res.id}
+            className="absolute left-0.5 right-0.5 rounded-md bg-reserved-bg border border-reserved/50 px-2 py-1 overflow-hidden z-20"
+            style={{ top: top + 1, height: height - 2 }}
+            onClick={e => {
+              e.stopPropagation()
+              if (adminMode) onDelete?.(res)
+            }}
+            title={adminMode ? 'Cliquer pour libérer' : undefined}
+          >
+            <p className="text-reserved text-xs font-semibold leading-tight truncate">
+              {res.start_time.slice(0, 5)} – {res.end_time.slice(0, 5)}
+            </p>
+            <p className="text-reserved/70 text-xs leading-tight truncate">{res.client_name}</p>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 export default function WeeklyPlanning({
@@ -42,17 +193,9 @@ export default function WeeklyPlanning({
     if (onWeekChange) onWeekChange(next)
     else setInternalOffset(next)
   }
-  const [selectedDay, setSelectedDay] = useState(0)
-  const reservations = initialReservations
-  const reservedSet = buildReservedSet(reservations)
   const days = getWeekDays(weekOffset)
-
-  const handleSlotClick = (dateKey: string, startTime: string) => {
-    if (onSlotClick) onSlotClick(dateKey, startTime)
-    else if (!adminMode) {
-      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })
-    }
-  }
+  const todayIndex = days.findIndex(d => isToday(d))
+  const [selectedDay, setSelectedDay] = useState(todayIndex >= 0 ? todayIndex : 0)
 
   return (
     <div>
@@ -62,161 +205,81 @@ export default function WeeklyPlanning({
         onNext={() => setWeekOffset((w) => w + 1)}
       />
 
-      {/* Mobile: accordion by day */}
+      {/* Mobile: one day at a time */}
       <div className="md:hidden">
-        {/* Day selector */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+        <div className="flex gap-1.5 overflow-x-auto pb-2 mb-3">
           {days.map((day, i) => {
-            const label = formatDayShort(day)
-            const dayNum = day.getDate()
             const today = isToday(day)
             return (
               <button
                 key={i}
                 onClick={() => setSelectedDay(i)}
-                className={`
-                  flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-lg min-w-[52px] min-h-[56px] border transition-colors
-                  ${selectedDay === i
+                className={`flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-lg min-w-[46px] border transition-colors ${
+                  selectedDay === i
                     ? 'bg-primary border-primary text-white'
                     : today
-                      ? 'bg-primary/20 border-primary/40 text-primary'
-                      : 'bg-surface-2 border-white/10 text-text-muted'
-                  }
-                `}
+                    ? 'bg-primary/20 border-primary/40 text-primary'
+                    : 'bg-surface-2 border-white/10 text-text-muted'
+                }`}
               >
-                <span className="text-xs capitalize">{label}</span>
-                <span className="text-lg font-bold leading-none">{dayNum}</span>
+                <span className="text-xs capitalize">{formatDayShort(day)}</span>
+                <span className="text-base font-bold leading-none">{day.getDate()}</span>
               </button>
             )
           })}
         </div>
 
-        {/* Slots for selected day */}
-        <div className="flex flex-col gap-2">
-          {TIME_SLOTS.map((slot) => {
-            const dateKey = formatDateKey(days[selectedDay])
-            const reserved = isReserved(reservedSet, dateKey, slot)
-            const reservation = reservations.find(
-              (r) => r.date === dateKey && r.start_time.slice(0, 5) === slot
-            )
-            if (adminMode) {
-              return (
-                <div key={slot} className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <SlotCell
-                      startTime={slot}
-                      reserved={reserved}
-                      compact
-                    />
-                  </div>
-                  {reserved && reservation ? (
-                    <button
-                      onClick={() => onDelete?.(reservation)}
-                      className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-reserved-bg border border-reserved/30 text-reserved hover:bg-reserved/20 transition-colors text-sm"
-                      title="Libérer ce créneau"
-                    >
-                      🗑
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => onReserve?.(dateKey, slot)}
-                      className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 transition-colors text-sm font-bold"
-                      title="Réserver ce créneau"
-                    >
-                      +
-                    </button>
-                  )}
-                </div>
-              )
-            }
-            return (
-              <SlotCell
-                key={slot}
-                startTime={slot}
-                reserved={reserved}
-                compact
-                onClick={() => handleSlotClick(dateKey, slot)}
-              />
-            )
-          })}
+        <div className="flex rounded-xl border border-white/10">
+          <TimeAxis />
+          <DayColumn
+            day={days[selectedDay]}
+            reservations={initialReservations}
+            adminMode={adminMode}
+            onReserve={onReserve}
+            onDelete={onDelete}
+            onSlotClick={onSlotClick}
+          />
         </div>
       </div>
 
-      {/* Desktop: full week grid */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full border-collapse min-w-[700px]">
-          <thead>
-            <tr>
-              <th className="w-24 text-text-muted text-sm font-normal py-2 pr-3 text-right">
-                Créneau
-              </th>
-              {days.map((day, i) => {
-                const today = isToday(day)
-                return (
-                  <th
-                    key={i}
-                    className={`text-center text-sm font-medium py-2 px-1 capitalize ${
-                      today ? 'text-primary' : 'text-text-muted'
-                    }`}
-                  >
-                    {formatDayHeader(day, true)}
-                  </th>
-                )
-              })}
-            </tr>
-          </thead>
-          <tbody>
-            {TIME_SLOTS.map((slot) => (
-              <tr key={slot} className="border-t border-white/5">
-                <td className="text-text-muted text-xs py-1 pr-3 text-right whitespace-nowrap">
-                  {formatSlotLabel(slot)}
-                </td>
-                {days.map((day, i) => {
-                  const dateKey = formatDateKey(day)
-                  const reserved = isReserved(reservedSet, dateKey, slot)
-                  const reservation = reservations.find(
-                    (r) => r.date === dateKey && r.start_time.slice(0, 5) === slot
-                  )
-                  return (
-                    <td key={i} className="py-1 px-1">
-                      {adminMode ? (
-                        <div className="flex items-center gap-1">
-                          <div className="flex-1">
-                            <SlotCell startTime={slot} reserved={reserved} />
-                          </div>
-                          {reserved && reservation ? (
-                            <button
-                              onClick={() => onDelete?.(reservation)}
-                              className="text-xs text-reserved hover:text-red-400 transition-colors min-w-[24px] min-h-[24px] flex items-center justify-center"
-                              title="Libérer"
-                            >
-                              🗑
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => onReserve?.(dateKey, slot)}
-                              className="text-xs text-primary hover:text-primary-light transition-colors min-w-[24px] min-h-[24px] flex items-center justify-center font-bold"
-                              title="Réserver"
-                            >
-                              +
-                            </button>
-                          )}
-                        </div>
-                      ) : (
-                        <SlotCell
-                          startTime={slot}
-                          reserved={reserved}
-                          onClick={() => handleSlotClick(dateKey, slot)}
-                        />
-                      )}
-                    </td>
-                  )
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Desktop: full week */}
+      <div className="hidden md:block rounded-xl border border-white/10 overflow-hidden">
+        {/* Day headers */}
+        <div className="flex border-b border-white/10 bg-surface">
+          <div className="flex-shrink-0 w-10" />
+          {days.map((day, i) => {
+            const today = isToday(day)
+            return (
+              <div
+                key={i}
+                className={`flex-1 text-center text-xs py-2 capitalize border-l border-white/5 ${
+                  today ? 'text-primary font-semibold' : 'text-text-muted'
+                }`}
+              >
+                {formatDayHeader(day, true)}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Calendar grid */}
+        <div className="flex">
+          <TimeAxis />
+          {days.map((day, i) => (
+            <div key={i} className="flex-1 border-l border-white/5">
+              <DayColumn
+                day={day}
+                reservations={initialReservations}
+                adminMode={adminMode}
+                onReserve={onReserve}
+                onDelete={onDelete}
+                onSlotClick={onSlotClick}
+              />
+            </div>
+          ))}
+        </div>
       </div>
+
     </div>
   )
 }

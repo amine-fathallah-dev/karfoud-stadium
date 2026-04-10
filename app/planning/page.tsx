@@ -14,9 +14,6 @@ export default function PlanningPage() {
           >
             Planning hebdomadaire
           </h1>
-          <p className="text-text-muted text-center mb-10 text-sm">
-            Cliquez sur un créneau disponible pour afficher notre numéro
-          </p>
           <PlanningFull />
         </div>
       </main>

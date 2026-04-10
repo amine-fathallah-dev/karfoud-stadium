@@ -41,7 +41,7 @@ export default function SlotCell({ startTime, reserved, onClick, compact = false
       disabled={reserved}
       title={label}
       className={`
-        w-full h-full min-h-[44px] text-xs rounded transition-colors duration-150 px-1 py-2
+        w-full h-full min-h-[30px] text-xs rounded transition-colors duration-150 px-1 py-0.5
         ${reserved
           ? 'bg-reserved-bg text-reserved border border-reserved/20 cursor-not-allowed'
           : 'bg-primary/10 text-primary border border-primary/20 hover:bg-primary/25 cursor-pointer'

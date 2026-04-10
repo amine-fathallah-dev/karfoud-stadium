@@ -23,9 +23,6 @@ export default function HomePage() {
             >
               Planning de la semaine
             </h2>
-            <p className="text-text-muted text-center mb-10">
-              Cliquez sur un créneau disponible pour nous contacter
-            </p>
             <PlanningPreview />
             <div className="text-center mt-8">
               <a
